@@ -11,16 +11,10 @@ import (
 	cp "github.com/otiai10/copy"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 var (
-	wo = &opt.WriteOptions{
-		NoWriteMerge: false,
-		Sync:         false,
-	}
-
 	requestKey      = "REQ"
 	batchRequestKey = "BATCHREQ"
 	dbRootFolder    = ""

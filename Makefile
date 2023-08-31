@@ -3,7 +3,7 @@ filename?=tmp_$(shell date -Iseconds)
 start:
 	EnableBackup=true \
 	EnableWriting=true \
-	RootFolder="." \
+	RootFolder="data" \
 	go run main.go
 
 check:

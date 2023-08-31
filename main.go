@@ -16,48 +16,50 @@ const (
 )
 
 var (
-	myDB   *db.DBRepo
-	readDB *db.DBRepo
+	myDB *db.LevelDBManager
 
-	rootFolder = "./tmp"
+	rootFolder = "./data"
 )
 
-func init() {
+func main() {
 	envRootFolder := os.Getenv("RootFolder")
 	if envRootFolder != "" {
-		rootFolder = envRootFolder + "/tmp"
+		rootFolder = envRootFolder + ""
 	}
-	myDB = db.NewDBRepository(rootFolder, "test")
-}
 
-func main() {
+	var err error
+	myDB, err = db.NewDB(rootFolder)
+	if err != nil {
+		log.Fatalf("error while create NewDB on path %s: %s", rootFolder, err.Error())
+	}
+
 	start := time.Now()
+	total := 10000000
 	checkKeysOnInit(myDB)
 	log.Printf("checkKeysOnInit done after %dms\n", time.Since(start).Milliseconds())
-	// checkKeysOnInit(readDB)
 
 	if config.EnableWriting {
 		log.Println("=== Start writing ===")
-		for i := 0; i < 9; i++ {
-			go func(index int) {
-				currentValue := getLatestKey(myDB, index)
-				for {
-					currentValue++
-					newKey := fmt.Sprintf("_%d%s", index, strconv.Itoa(currentValue))
-					if err := myDB.Put(newKey, []byte(fmt.Sprintf("value of %d", currentValue))); err != nil {
-						log.Printf("error while put value: %s", err.Error())
-					}
-					newLastKey := fmt.Sprintf("%d%s", index, latestKey)
-					if err := myDB.Put(newLastKey, []byte(strconv.Itoa(currentValue))); err != nil {
-						log.Printf("error while put value: %s", err.Error())
-					}
-				}
-			}(i)
-		}
+		// for i := 0; i < 9; i++ {
+		// 	go func(index int) {
+		// 		currentValue := getLatestKey(myDB, index)
+		// 		for {
+		// 			currentValue++
+		// 			newKey := fmt.Sprintf("_%d%s", index, strconv.Itoa(currentValue))
+		// 			if err := myDB.Put(newKey, []byte(fmt.Sprintf("value of %d", currentValue))); err != nil {
+		// 				log.Printf("error while put value: %s", err.Error())
+		// 			}
+		// 			newLastKey := fmt.Sprintf("%d%s", index, latestKey)
+		// 			if err := myDB.Put(newLastKey, []byte(strconv.Itoa(currentValue))); err != nil {
+		// 				log.Printf("error while put value: %s", err.Error())
+		// 			}
+		// 		}
+		// 	}(i)
+		// }
 
 		index := 9
 		currentValue := getLatestKey(myDB, index)
-		for {
+		for i := 0; i < total; i++ {
 			currentValue++
 			newKey := fmt.Sprintf("_%d%s", index, strconv.Itoa(currentValue))
 			if err := myDB.Put(newKey, []byte(fmt.Sprintf("value of %d", currentValue))); err != nil {
@@ -69,9 +71,10 @@ func main() {
 			}
 		}
 	}
+	log.Printf("write %d keys done after %dms", total, time.Since(start).Milliseconds())
 }
 
-func getLatestKey(db *db.DBRepo, index int) int {
+func getLatestKey(db *db.LevelDBManager, index int) int {
 	value, err := db.Get(fmt.Sprintf("%d%s", index, latestKey))
 	if err != nil {
 		return 0
@@ -81,7 +84,7 @@ func getLatestKey(db *db.DBRepo, index int) int {
 	return latest
 }
 
-func checkKeysOnInit(db *db.DBRepo) bool {
+func checkKeysOnInit(db *db.LevelDBManager) bool {
 	wg := &sync.WaitGroup{}
 	for j := 0; j < 10; j++ {
 		wg.Add(1)
