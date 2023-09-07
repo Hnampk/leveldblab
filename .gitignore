@@ -2,3 +2,5 @@ backup*/
 vendor/
 tmp/
 data/
+data-testing/
+test/
